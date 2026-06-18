@@ -223,9 +223,6 @@ public class MybatisGeneratorBridge {
         }
         sb.append(generatorConfig.getXmlPackage().replace(".", File.separator)).append(File.separator);
         sb.append(JavaBeansUtil.getCamelCaseString(generatorConfig.getTableName(), true));
-        if (this.generatorConfig.isSharding()) {
-            sb.append("Sharding");
-        }
         sb.append("Mapper.xml");
         return FilenameUtils.normalize(sb.toString());
     }

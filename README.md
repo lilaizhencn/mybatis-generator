@@ -74,8 +74,6 @@ src/main/resources/
 
 ## License / 许可证
 
-This project includes modified portions of [MyBatis Generator](https://github.com/mybatis/generator) which is licensed under the Apache License 2.0.
+Apache License 2.0 — This project includes modified portions of [MyBatis Generator](https://github.com/mybatis/generator).
 
-本项目包含 [MyBatis Generator](https://github.com/mybatis/generator) 的修改版本，原始项目使用 Apache License 2.0 许可。
-
-MIT License
+本项目包含 [MyBatis Generator](https://github.com/mybatis/generator) 的修改版本，使用 Apache License 2.0 许可。

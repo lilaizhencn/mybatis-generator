@@ -47,14 +47,22 @@ public class InsertElementGenerator extends AbstractXmlElementGenerator {
     List<IntrospectedColumn> primaryKeyColumns = this.introspectedTable.getPrimaryKeyColumns();
     if (primaryKeyColumns != null && primaryKeyColumns.size() == 1
         && primaryKeyColumns.get(0).isAutoIncrement()) {
-      XmlElement selectKeyElement = new XmlElement("selectKey");
-      selectKeyElement.addAttribute(new Attribute("resultType", primaryKeyColumns.get(0)
-          .getFullyQualifiedJavaType().getFullyQualifiedNameWithoutTypeParameters()));
-      selectKeyElement.addAttribute(
-          new Attribute("keyProperty", "record." + primaryKeyColumns.get(0).getJavaProperty()));
-      selectKeyElement.addAttribute(new Attribute("order", "AFTER"));
-      selectKeyElement.addElement(new TextElement("SELECT LAST_INSERT_ID()"));
-      answer.addElement(selectKeyElement);
+      if ("postgresql".equalsIgnoreCase(this.context.getId())) {
+        answer.addAttribute(new Attribute("useGeneratedKeys", "true"));
+        answer.addAttribute(new Attribute("keyProperty",
+            "record." + primaryKeyColumns.get(0).getJavaProperty()));
+        answer.addAttribute(new Attribute("keyColumn",
+            primaryKeyColumns.get(0).getActualColumnName()));
+      } else {
+        XmlElement selectKeyElement = new XmlElement("selectKey");
+        selectKeyElement.addAttribute(new Attribute("resultType", primaryKeyColumns.get(0)
+            .getFullyQualifiedJavaType().getFullyQualifiedNameWithoutTypeParameters()));
+        selectKeyElement.addAttribute(
+            new Attribute("keyProperty", "record." + primaryKeyColumns.get(0).getJavaProperty()));
+        selectKeyElement.addAttribute(new Attribute("order", "AFTER"));
+        selectKeyElement.addElement(new TextElement("SELECT LAST_INSERT_ID()"));
+        answer.addElement(selectKeyElement);
+      }
     }
 
     GeneratedKey gk = this.introspectedTable.getGeneratedKey();

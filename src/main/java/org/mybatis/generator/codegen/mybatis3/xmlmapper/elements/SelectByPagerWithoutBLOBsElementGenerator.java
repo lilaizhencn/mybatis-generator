@@ -52,7 +52,11 @@ public class SelectByPagerWithoutBLOBsElementGenerator extends AbstractXmlElemen
     ifElement.addElement(new TextElement("order by ${pager.sortItem} ${pager.sortType}"));
     answer.addElement(ifElement);
 
-    answer.addElement(new TextElement("limit #{pager.startIndex} , #{pager.pageSize}"));
+    if ("postgresql".equalsIgnoreCase(this.context.getId())) {
+      answer.addElement(new TextElement("limit #{pager.pageSize} offset #{pager.startIndex}"));
+    } else {
+      answer.addElement(new TextElement("limit #{pager.startIndex} , #{pager.pageSize}"));
+    }
 
     if (this.context.getPlugins().sqlMapSelectByExampleWithoutBLOBsElementGenerated(answer,
         this.introspectedTable)) {

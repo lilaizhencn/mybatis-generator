@@ -68,27 +68,67 @@ public class BatchInsertOnDuplicateKeyElementGenerator extends AbstractXmlElemen
       answer.addElement(foreachElement);
     }
 
-    answer.addElement(new TextElement("ON DUPLICATE KEY UPDATE"));
+    boolean isPostgresql = "postgresql".equalsIgnoreCase(this.context.getId());
 
-    List<IntrospectedColumn> columns = ListUtilities
-        .removeIdentityAndGeneratedAlwaysColumns(this.introspectedTable.getAllColumns());
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0;; i++) {
-      String column = columns.get(i).getActualColumnName();
-      // without id
-      if ("id".equalsIgnoreCase(column)) {
-        continue;
+    if (isPostgresql) {
+      // PostgreSQL: ON CONFLICT (pk) DO UPDATE SET col = EXCLUDED.col, ...
+      answer.addElement(new TextElement("ON CONFLICT ("));
+
+      List<IntrospectedColumn> pkColumns = this.introspectedTable.getPrimaryKeyColumns();
+      StringBuilder pkSb = new StringBuilder();
+      if (pkColumns != null && !pkColumns.isEmpty()) {
+        for (int i = 0; i < pkColumns.size(); i++) {
+          if (i > 0) {
+            pkSb.append(", ");
+          }
+          pkSb.append(pkColumns.get(i).getActualColumnName());
+        }
+      } else {
+        pkSb.append("id"); // fallback
       }
-      sb.append(column);
-      sb.append(" = VALUES(");
-      sb.append(column);
-      sb.append(")");
-      if (i == columns.size() - 1) {
-        break;
+      answer.addElement(new TextElement(pkSb.toString()));
+      answer.addElement(new TextElement(") DO UPDATE SET"));
+
+      List<IntrospectedColumn> columns = ListUtilities
+          .removeIdentityAndGeneratedAlwaysColumns(this.introspectedTable.getAllColumns());
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0;; i++) {
+        String column = columns.get(i).getActualColumnName();
+        if ("id".equalsIgnoreCase(column)) {
+          continue;
+        }
+        sb.append(column);
+        sb.append(" = EXCLUDED.");
+        sb.append(column);
+        if (i == columns.size() - 1) {
+          break;
+        }
+        sb.append(", ");
       }
-      sb.append(", ");
+      answer.addElement(new TextElement(sb.toString()));
+    } else {
+      // MySQL: ON DUPLICATE KEY UPDATE col = VALUES(col), ...
+      answer.addElement(new TextElement("ON DUPLICATE KEY UPDATE"));
+
+      List<IntrospectedColumn> columns = ListUtilities
+          .removeIdentityAndGeneratedAlwaysColumns(this.introspectedTable.getAllColumns());
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0;; i++) {
+        String column = columns.get(i).getActualColumnName();
+        if ("id".equalsIgnoreCase(column)) {
+          continue;
+        }
+        sb.append(column);
+        sb.append(" = VALUES(");
+        sb.append(column);
+        sb.append(")");
+        if (i == columns.size() - 1) {
+          break;
+        }
+        sb.append(", ");
+      }
+      answer.addElement(new TextElement(sb.toString()));
     }
-    answer.addElement(new TextElement(sb.toString()));
 
     if (this.context.getPlugins().sqlMapInsertElementGenerated(answer, this.introspectedTable)) {
       parentElement.addElement(answer);
